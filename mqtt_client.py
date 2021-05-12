@@ -14,7 +14,7 @@ mqttc = paho.Client()
 # TODO: revise host to your IP
 host = "172.20.10.10"
 topic1 = "angle_sel"
-topic2 = "angle_det"
+# topic2 = "angle_det"
 
 # Callbacks
 def on_connect(self, mosq, obj, rc):
@@ -48,10 +48,9 @@ mqttc.on_subscribe = on_subscribe
 mqttc.on_unsubscribe = on_unsubscribe
 
 # Connect and subscribe
-print("Connecting to " + host + "/" + topic1 + "/" + topic2)
+print("Connecting to " + host + "/" + topic1)
 mqttc.connect(host, port=1883, keepalive=60)
 mqttc.subscribe(topic1, 0)
-mqttc.subscribe(topic2, 0)
 
 # Loop forever, receiving messages
 mqttc.loop_forever()
