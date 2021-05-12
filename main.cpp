@@ -131,7 +131,7 @@ void publish_message_sel(MQTT::Client<MQTTNetwork, Countdown>* client_sel) {
     // message_num++;
     MQTT::Message message;
     char buff[100];
-    sprintf(buff, "The angle we selected is %d degree.", angle_sel);
+    sprintf(buff, "GestureID:%d, Feature value:%d, Sequence number:%d.", id_now, feature_now, seq_num);
     message.qos = MQTT::QOS0;
     message.retained = false;
     message.dup = false;
@@ -142,8 +142,8 @@ void publish_message_sel(MQTT::Client<MQTTNetwork, Countdown>* client_sel) {
     // printf("rc:  %d\r\n", rc);
     printf("%s\r\n", buff);
     // printf("Back to RPC Loop, please send a command to call tilt angle detection mode\n\n");
-    menu_queue.call(menu_selected);
-    mode = RPC_LOOP;
+    // menu_queue.call(menu_selected);
+    // mode = RPC_LOOP;
 }
 
 
@@ -197,9 +197,6 @@ int PredictGesture(float* output) {
 void gesture(Arguments *in, Reply *out);
 RPCFunction gesture_RPC(&gesture, "gesture");
 void gesture_UI_mode();
-
-void back(Arguments *in, Reply *out);
-RPCFunction back_RPC(&back, "back");
 
 void back_finished(Arguments *in, Reply *out);
 RPCFunction back_RPC2(&back_finished, "back_finished");
@@ -479,21 +476,14 @@ void gesture_UI_mode(){
   }
 }
 
-void back(Arguments *in, Reply *out){
-  mode = RPC_LOOP;
-  printf("\nStop gesture_UI mode.\nBack to RPC loop.\n\n");
-  ThisThread::sleep_for(1000ms);
-  seq_num = 0;
-}
-
 void back_finished(Arguments *in, Reply *out){
   mode = RPC_LOOP;
-  printf("\nStop tilt angle detection mode.\nBack to RPC loop.\n\n");
-  angle = 15;
-  angle_sel = 15;
-  angle_det = 0.0;
+  printf("\nBack to RPC loop.\n\n");
+  
   ThisThread::sleep_for(1000ms);
-  // menu_queue.call(menu);
+  seq_num = 0;
+  id_now = 0;
+  feature_now = 0;
   message_num = 0;
 }
 

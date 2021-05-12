@@ -21,17 +21,13 @@ def on_connect(self, mosq, obj, rc):
     print("Connected rc: " + str(rc))
 
 def on_message(mosq, obj, msg):
-    if msg.topic == "angle_sel":
-        print("[Received] Topic: " + msg.topic + ", Message: " + str(msg.payload) + "\n")
-        s.write(bytes("/back/run\r\n", 'UTF-8'))
-    else:
-        m = str(msg.payload)
-        print(m)
-        num_s = m.split(":")[-1]
-        num = int(num_s.split('\\')[0])
-        if num == 10:
-            print("We have already detected for 10 times, go back.")
-            s.write(bytes("/back_finished/run\r\n", 'UTF-8'))
+    m = str(msg.payload)
+    print(m)
+    num_s = m.split(":")[-1]
+    num = int(num_s.split('\\')[0])
+    if num == 10:
+        print("We have already detected for 10 times, go back.")
+        s.write(bytes("/back_finished/run\r\n", 'UTF-8'))
     
 
 
