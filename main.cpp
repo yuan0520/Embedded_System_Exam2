@@ -32,6 +32,7 @@ volatile bool closed = false;
 int blink_time = 10;
 
 const char* topic1 = "angle_sel";
+const char* topic2 = "value";
 // const char* topic2 = "angle_det";
 
 uLCD_4DGL uLCD(D1, D0, D2);
@@ -115,6 +116,33 @@ void menu_angle_det(){
     uLCD.printf("\nangle_det: %.2f\n", angle_det);
 }
 
+void messageArrived_val(MQTT::MessageData& md) {
+    MQTT::Message &message = md.message;
+    char msg[300];
+    sprintf(msg, "Message arrived: QoS%d, retained %d, dup %d, packetID %d\r\n", message.qos, message.retained, message.dup, message.id);
+    printf(msg);
+    ThisThread::sleep_for(1000ms);
+    char payload[300];
+    sprintf(payload, "Payload %.*s\r\n", message.payloadlen, (char*)message.payload);
+    printf(payload);
+    ++arrivedcount;
+}
+
+void publish_message_val(MQTT::Client<MQTTNetwork, Countdown>* client_val) {
+    // message_num++;
+    MQTT::Message message;
+    char buff[100];
+    for(int i=0; i<10; i++){
+        sprintf(buff, "gesture %d:%d, feature %d:%d\n",i, ges_ID[i], i, feature[i]);
+    }
+    message.qos = MQTT::QOS0;
+    message.retained = false;
+    message.dup = false;
+    message.payload = (void*) buff;
+    message.payloadlen = strlen(buff) + 1;
+    int rc = client_val->publish(topic2, message);
+}
+
 void messageArrived_select_angle(MQTT::MessageData& md) {
     MQTT::Message &message = md.message;
     char msg[300];
@@ -138,12 +166,6 @@ void publish_message_sel(MQTT::Client<MQTTNetwork, Countdown>* client_sel) {
     message.payload = (void*) buff;
     message.payloadlen = strlen(buff) + 1;
     int rc = client_sel->publish(topic1, message);
-
-    // printf("rc:  %d\r\n", rc);
-    // printf("%s\r", buff);
-    // printf("Back to RPC Loop, please send a command to call tilt angle detection mode\n\n");
-    // menu_queue.call(menu_selected);
-    // mode = RPC_LOOP;
 }
 
 
@@ -197,9 +219,6 @@ int PredictGesture(float* output) {
 void gesture(Arguments *in, Reply *out);
 RPCFunction gesture_RPC(&gesture, "gesture");
 void gesture_UI_mode();
-
-void back_finished(Arguments *in, Reply *out);
-RPCFunction back_RPC2(&back_finished, "back_finished");
 
 
 void gesture(Arguments *in, Reply *out){
@@ -476,12 +495,57 @@ void gesture_UI_mode(){
   }
 }
 
+void get_value(Arguments *in, Reply *out);
+RPCFunction get_value_RPC(&get_value, "get_value");
+
+void get_value(Arguments *in, Reply *out){
+
+  NetworkInterface* net = wifi;
+  MQTTNetwork mqttNetwork(net);
+  MQTT::Client<MQTTNetwork, Countdown> client_val(mqttNetwork);
+
+  //TODO: revise host to your IP
+  const char* host = "172.20.10.10";
+  // printf("Connecting to TCP network...\r\n");
+
+  SocketAddress sockAddr;
+  sockAddr.set_ip_address(host);
+  sockAddr.set_port(1883);
+
+  // printf("address is %s/%d\r\n", (sockAddr.get_ip_address() ? sockAddr.get_ip_address() : "None"),  (sockAddr.get_port() ? sockAddr.get_port() : 0) ); //check setting
+
+  int rc = mqttNetwork.connect(sockAddr);
+  // printf("rc = %d\n", rc);
+  if (rc != 0) {
+      printf("Connection error.");
+      // return -1;
+  }
+  // printf("client_val Successfully connected!\r\n");
+
+  MQTTPacket_connectData data = MQTTPacket_connectData_initializer;
+  data.MQTTVersion = 3;
+  data.clientID.cstring = "value";
+
+  if ((rc = client_val.connect(data)) != 0){
+      printf("Fail to connect MQTT\r\n");
+  }
+  if (client_val.subscribe(topic2, MQTT::QOS0, messageArrived_val) != 0){
+      printf("Fail to subscribe\r\n");
+  }
+
+  mqtt_queue.call(&publish_message_val, &client_val);
+
+  for(int i=0; i<10; i++){
+    printf("gesture %d:%d, feature %d:%d\n",i, ges_ID[i], i, feature[i]);
+  }
+}
+
+void back_finished(Arguments *in, Reply *out);
+RPCFunction back_RPC2(&back_finished, "back_finished");
+
 void back_finished(Arguments *in, Reply *out){
   mode = RPC_LOOP;
   printf("\nBack to RPC loop.\n\n");
-  for(int i=0; i<10; i++){
-    printf("gesture %d: %d, feature %d: %d\n",i, ges_ID[i], i, feature[i]);
-  }
   
   ThisThread::sleep_for(1000ms);
   seq_num = 0;
@@ -525,11 +589,7 @@ int main(){
         // return -1;
     }
 
-    
-
     mqtt_thread.start(callback(&mqtt_queue, &EventQueue::dispatch_forever));
-    // user_btn.rise(mqtt_queue.event(&publish_message_select_angle, &client_sel));
-
 
     //The mbed RPC classes are now wrapped to create an RPC enabled version - see RpcClasses.h so don't add to base class
     // receive commands, and send back the responses
