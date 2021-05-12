@@ -24,7 +24,7 @@ def on_message(mosq, obj, msg):
     m = str(msg.payload)
     print(m)
     num_s = m.split(":")[-1]
-    num = int(num_s.split('\\')[0])
+    num = int(num_s.split('.')[0])
     if num == 10:
         print("We have already detected for 10 times, go back.")
         s.write(bytes("/back_finished/run\r\n", 'UTF-8'))

@@ -140,7 +140,7 @@ void publish_message_sel(MQTT::Client<MQTTNetwork, Countdown>* client_sel) {
     int rc = client_sel->publish(topic1, message);
 
     // printf("rc:  %d\r\n", rc);
-    printf("%s\r\n", buff);
+    // printf("%s\r", buff);
     // printf("Back to RPC Loop, please send a command to call tilt angle detection mode\n\n");
     // menu_queue.call(menu_selected);
     // mode = RPC_LOOP;
@@ -380,7 +380,7 @@ void gesture_UI_mode(){
       cos_value = ((ref_XYZ[0]*real_XYZ[0] + ref_XYZ[1]*real_XYZ[1] + ref_XYZ[2]*real_XYZ[2])/(mag_A)/(mag_B));
       rad = acos(cos_value);
       angle_det = 180.0 * rad/M_PI;
-      printf("  angle changed = %.2f\r\n\n", abs(angle_det));
+      printf("  angle changed = %.2f\r\n", abs(angle_det));
       // menu_queue.call(menu_angle_det);
 
       if (abs(angle_det) > angle_sel) {
@@ -415,7 +415,7 @@ void gesture_UI_mode(){
       cos_value = ((ref_XYZ[0]*real_XYZ[0] + ref_XYZ[1]*real_XYZ[1] + ref_XYZ[2]*real_XYZ[2])/(mag_A)/(mag_B));
       rad = acos(cos_value);
       angle_det = 180.0 * rad/M_PI;
-      printf("  angle changed = %.2f\r\n\n", abs(angle_det));
+      printf("  angle changed = %.2f\r\n", abs(angle_det));
       // menu_queue.call(menu_angle_det);
 
       if (abs(angle_det) > angle_sel) {
@@ -451,7 +451,7 @@ void gesture_UI_mode(){
       cos_value = ((ref_XYZ[0]*real_XYZ[0] + ref_XYZ[1]*real_XYZ[1] + ref_XYZ[2]*real_XYZ[2])/(mag_A)/(mag_B));
       rad = acos(cos_value);
       angle_det = 180.0 * rad/M_PI;
-      printf("  angle changed = %.2f\r\n\n", abs(angle_det));
+      printf("angle changed = %.2f\r\n", abs(angle_det));
       // menu_queue.call(menu_angle_det);
 
       if (abs(angle_det) > angle_sel) {
@@ -479,6 +479,9 @@ void gesture_UI_mode(){
 void back_finished(Arguments *in, Reply *out){
   mode = RPC_LOOP;
   printf("\nBack to RPC loop.\n\n");
+  for(int i=0; i<10; i++){
+    printf("gesture %d: %d, feature %d: %d\n",i, ges_ID[i], i, feature[i]);
+  }
   
   ThisThread::sleep_for(1000ms);
   seq_num = 0;
